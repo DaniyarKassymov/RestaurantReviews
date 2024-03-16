@@ -1,0 +1,68 @@
+@model exam9kassymovdaniyar.ViewModels.Restaurant.AllRestaurantsVm
+
+@{
+    ViewBag.Title = "Список заведений";
+    Layout = "_Layout";
+    decimal result = Decimal.Zero;
+}
+
+<div class="container">
+    @foreach (var restaurant in Model.Restaurants)
+    {
+        <div class="card mb-3 mx-auto my-0" style="width: 570px;">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <a asp-action="RestaurantDetails" asp-route-id="@restaurant.Id">
+                        <img src="~/@restaurant.Image" class="img-fluid card_image" alt="restaurant_image">
+                    </a>
+                </div>
+                <div class="col-md-8 text-start">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a class="card_title_link" asp-action="RestaurantDetails" asp-route-id="@restaurant.Id">Название: @restaurant.Title</a>
+                        </h5>
+                        <ul>
+                            <li>
+                                @foreach (var restaurantReview in restaurant.Reviews)
+                                {
+                                    result += restaurantReview.Rating;
+                                }
+                                @if (restaurant.Reviews.Count != 0)
+                                {
+                                    <p>Оценка: @Math.Round(result / restaurant.Reviews.Count, 1)</p>
+                                }
+                                else
+                                {
+                                    <p>Оценка: Нет отзывов</p>
+                                }
+                            </li>
+                            <li>Кол-во изображений: @restaurant.Gallery.Count</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<div class="d-flex justify-content-between">
+    @if (Model.PaginationVm.HasPreviousPage)
+    {
+        <div class="w-25 text-center">
+            <a asp-action="AllRestaurants"
+               asp-route-page="@(Model.PaginationVm.PageNumber - 1)"
+               class="btn btn-outline-info">
+                Назад
+            </a>
+        </div>
+    }
+    @if (Model.PaginationVm.HasNextPage)
+    {
+        <div class="w-25 text-center">
+            <a asp-action="AllRestaurants"
+               asp-route-page="@(Model.PaginationVm.PageNumber + 1)"
+               class="btn btn-outline-info">
+                Вперед
+            </a>
+        </div>
+    }
+</div>

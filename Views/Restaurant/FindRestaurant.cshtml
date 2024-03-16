@@ -1,0 +1,30 @@
+@model System.Collections.Generic.List<exam9kassymovdaniyar.ViewModels.Restaurant.RestaurantVm>
+
+@{
+    ViewBag.Title = "Найденные заведения";
+    Layout = "_Layout";
+}
+
+<div class="container">
+    @foreach (var restaurant in Model)
+    {
+        <div class="card mb-3 mx-auto my-0" style="width: 570px;">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="~/@restaurant.Image" class="img-fluid card_image" alt="restaurant_image">
+                </div>
+                <div class="col-md-8 text-start">
+                    <div class="card-body">
+                        <h5 class="card-title">Название: @restaurant.Title</h5>
+                        <ul>
+                            <li>
+                                Оценка: @restaurant.Reviews.Count
+                            </li>
+                            <li>Кол-во изображений: @restaurant.Gallery.Count</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

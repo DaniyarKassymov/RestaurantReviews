@@ -1,0 +1,180 @@
+@using exam9kassymovdaniyar.Utilities.Enums
+@using exam9kassymovdaniyar.Utilities.Services
+@model exam9kassymovdaniyar.ViewModels.Restaurant.RestaurantDetailsVm
+
+@{
+    ViewBag.Title = "Детальный просмотр заведения";
+    Layout = "_Layout";
+
+    var isUserAddedReview = false;
+    decimal rating = 0;
+    
+    foreach (var review in Model.Reviews)
+        if (review.UserId == ViewBag.UserId)
+            isUserAddedReview = true;
+
+    foreach (var review in Model.Reviews)
+        rating += review.Rating;
+
+    rating = Math.Round(rating / Model.Reviews.Count, 1);
+}
+
+<div class="container" style="width: 760px;">
+    <div class="row justify-content-around ">
+        <div class="col-4">
+            <img class="rounded-circle" style="width: 200px; height: 200px;" src="~/@Model.Image" alt="avatar">
+        </div>
+        <div class="col-7 pt-4">
+            <div class="row">
+                <div class="col-4">
+                    <h2>@Model.Title</h2>
+                </div>
+            </div>
+            <div>Описание: @Model.Description</div>
+        </div>
+    </div>
+    <div class="row d-flex mt-5">
+        @foreach (var galleryImage in Model.Gallery)
+        {
+            <div class="col-3 pe-0 ps-0 m-0">
+                <img src="~/@galleryImage" width="190px" height="200px" alt="post_image">
+            </div>
+        }
+        <div id="comments">
+            
+        </div>
+    </div>
+    <div>
+        <h4>Рейтинг: @rating</h4>
+    </div>
+    <div>
+        <h4>Отзывы:</h4>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th scope="col">Логин</th>
+                <th scope="col">Дата создания</th>
+                <th scope="col">Оценка</th>
+                <th scope="col">Отзыв</th>
+            </tr>
+            </thead>
+            <tbody id="results">
+            @foreach (var review in Model.Reviews.OrderByDescending(r => r.CreatedAt))
+            {
+                <tr>
+                    <td>@review.User.UserName</td>
+                    <td>@review.CreatedAt</td>
+                    <td>@review.Rating</td>
+                    <td>@review.Description</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (!isUserAddedReview)
+        {
+            <div class="d-flex justify-content-center">
+                <div class="card card_width">
+                    <div class="card-body d-flex justify-content-center">
+                        <form id="addUser" enctype="multipart/form-data">
+                            <div class="text-center">
+                                <h6>Оставить отзыв</h6>
+                            </div>
+                            <div>
+                                <input type="text"
+                                       class="form-control my-2 text-dark" name="answer" id="writeAnswer"
+                                       placeholder="Отзыв">
+                            </div>
+                            <select class="form-control" id="rating">
+                                @foreach (Rating rating in ViewBag.Rating)
+                                {
+                                    <option value="@rating">@rating.GetDisplayName()</option>
+                                }
+                            </select>
+                            <input type="button" id="submit" class="btn btn-info w-100 mt-3 text-white" value="Введите ответ"/>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex justify-content-center">
+                <div class="card card_width">
+                    <div class="card-body d-flex justify-content-center">
+                        <a asp-action="DeleteReview" asp-route-restaurantId="@Model.Id" class="btn btn-danger w-100">Удалить отзыв</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="d-flex justify-content-center mt-3">
+        <div class="card card_width">
+            <div class="card-body d-flex justify-content-center">
+                <form id="form" enctype="multipart/form-data">
+                    <div class="text-center">
+                        <h6>Добавить изображение</h6>
+                    </div>
+                    <div>
+                        <input class="form-control my-2" type="file" name="photo" id="photo" accept="image/*">
+                    </div>
+                    <input type="button" onclick="submitForm()" class="btn btn-info w-100 mt-3 text-white" value="Отправить"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts
+{
+    <script>
+        let scrollHeight = Math.max(
+          document.body.scrollHeight, document.documentElement.scrollHeight,
+          document.body.offsetHeight, document.documentElement.offsetHeight,
+          document.body.clientHeight, document.documentElement.clientHeight);
+    
+           $(document).ready(function () {
+               $('#submit').click(function (event) {
+                   event.preventDefault();
+                   let review = $('#writeAnswer').val();
+                   let rating = $('#rating').val();
+                   review = encodeURIComponent(review);
+                   rating = encodeURIComponent(rating);
+                   $('#results').append($('<tr>').load('@Url.Action("AddReview", "User")?review=' + review + '&restaurantId=@Model.Id' + '&rating=' + rating));
+                   window.scrollTo(0, scrollHeight);
+               });
+           });
+           
+           function submitForm(){
+                   let fileInput = $('#photo')[0];
+                   
+                   if (fileInput.files.length > 0){
+                       let formData = new FormData();
+                       formData.append('photo', fileInput.files[0]);
+                       formData.append('restaurantId', @Model.Id);
+                       
+                       $.ajax({
+                           url: '@Url.Action("Create")',
+                           type: 'POST',
+                           data: formData,
+                           processData: false,
+                           contentType: false, 
+                           success: function (data){
+                               console.log('данные загружены', data);
+                               
+                               let divForPhoto = document.createElement('div');
+                               divForPhoto.setAttribute("class", "col-3 pe-0 ps-0 m-0");
+                               divForPhoto.setAttribute("id", "comments");
+                               
+                               divForPhoto.innerHTML = ('<img width="190px" height="200px" alt="post_image" src=' + '/' + data.relativePath + '>'); 
+                               
+                               document.getElementById('comments').appendChild(divForPhoto);
+                           },
+                           error: function (){
+                               console.error('Ошика загрузки данных')
+                           }
+                       });
+                   }else{
+                       console.error('Данные некорректны');
+                   }
+               }
+    </script>
+}
